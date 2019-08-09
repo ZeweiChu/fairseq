@@ -364,6 +364,7 @@ class FConvDecoder(FairseqIncrementalDecoder):
         if embed_dict:
             self.embed_tokens = utils.load_embedding(embed_dict, self.dictionary, self.embed_tokens)
 
+        # positional embedding
         self.embed_positions = PositionalEmbedding(
             max_positions,
             embed_dim,
@@ -377,6 +378,7 @@ class FConvDecoder(FairseqIncrementalDecoder):
         self.residuals = []
 
         layer_in_channels = [in_channels]
+        # 几层convolution
         for i, (out_channels, kernel_size, residual) in enumerate(convolutions):
             if residual == 0:
                 residual_dim = out_channels
@@ -430,11 +432,13 @@ class FConvDecoder(FairseqIncrementalDecoder):
         x = self._embed_tokens(prev_output_tokens, incremental_state)
 
         # embed tokens and combine with positional embeddings
+        # 拼接词向量和位置向量
         x += pos_embed
         x = F.dropout(x, p=self.dropout, training=self.training)
-        target_embedding = x
+        target_embedding = x # target embedding用于之后计算attention
 
         # project to size of convolution
+        # 线性变换到符合convolution的大小
         x = self.fc1(x)
 
         # B x T x C -> T x B x C
